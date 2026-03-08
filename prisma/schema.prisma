@@ -1,0 +1,69 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Space {
+  id        String     @id @default(cuid())
+  name      String
+  emoji     String     @default("📚")
+  color     String     @default("#6366f1")
+  createdAt DateTime   @default(now())
+  materials Material[]
+}
+
+model Material {
+  id        String     @id @default(cuid())
+  spaceId   String
+  filename  String
+  content   String
+  status    String     @default("pending")
+  createdAt DateTime   @default(now())
+  space     Space      @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  summary   Summary?
+  keyPoints KeyPoints?
+  questions Question[]
+}
+
+model Summary {
+  id         String   @id @default(cuid())
+  materialId String   @unique
+  content    String
+  createdAt  DateTime @default(now())
+  material   Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+}
+
+model KeyPoints {
+  id         String   @id @default(cuid())
+  materialId String   @unique
+  points     String
+  createdAt  DateTime @default(now())
+  material   Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+}
+
+model Question {
+  id            String          @id @default(cuid())
+  materialId    String
+  type          String
+  question      String
+  options       String?
+  answer        String
+  explanation   String
+  topic         String
+  createdAt     DateTime        @default(now())
+  material      Material        @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  answerHistory AnswerHistory[]
+}
+
+model AnswerHistory {
+  id         String   @id @default(cuid())
+  questionId String
+  isCorrect  Boolean
+  userAnswer String
+  answeredAt DateTime @default(now())
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
