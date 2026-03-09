@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import CreateSpaceModal from "@/components/CreateSpaceModal";
+import { apiClient } from "@/lib/api-client";
 
 interface Space {
   id: string;
@@ -19,10 +20,14 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   const fetchSpaces = async () => {
-    const res = await fetch("/api/spaces");
-    const data = await res.json();
-    setSpaces(data);
-    setLoading(false);
+    try {
+      const data = await apiClient.get("/api/spaces");
+      setSpaces(Array.isArray(data) ? data : []);
+    } catch {
+      setSpaces([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {

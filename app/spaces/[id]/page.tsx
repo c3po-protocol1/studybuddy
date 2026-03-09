@@ -7,6 +7,7 @@ import FileUploader from "@/components/FileUploader";
 import SummaryTab from "@/components/SummaryTab";
 import KeyPointsTab from "@/components/KeyPointsTab";
 import PracticeTab from "@/components/PracticeTab";
+import { apiClient } from "@/lib/api-client";
 
 type TabType = "summary" | "keypoints" | "practice";
 
@@ -48,11 +49,13 @@ export default function SpacePage() {
   const [pollingIds, setPollingIds] = useState<Set<string>>(new Set());
 
   const fetchSpace = useCallback(async () => {
-    const res = await fetch(`/api/spaces/${spaceId}`);
-    if (!res.ok) { router.push("/"); return; }
-    const data = await res.json();
-    setSpace(data);
-    setLoading(false);
+    try {
+      const data = await apiClient.get(`/api/spaces/${spaceId}`);
+      setSpace(data);
+      setLoading(false);
+    } catch {
+      router.push("/");
+    }
   }, [spaceId, router]);
 
   useEffect(() => {
@@ -91,7 +94,11 @@ export default function SpacePage() {
   const handleDeleteMaterial = async (materialId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!confirm("이 자료를 삭제하시겠습니까?")) return;
-    await fetch(`/api/materials/${materialId}`, { method: "DELETE" });
+    try {
+      await apiClient.delete(`/api/materials/${materialId}`);
+    } catch {
+      // ignore
+    }
     if (selectedMaterialId === materialId) setSelectedMaterialId(null);
     fetchSpace();
   };

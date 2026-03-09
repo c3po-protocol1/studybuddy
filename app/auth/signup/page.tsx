@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { register, login } from "@/lib/auth-store";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -18,21 +18,24 @@ export default function SignUpPage() {
     setError("");
     setLoading(true);
 
-    const res = await fetch("/api/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, name }),
-    });
-
-    if (!res.ok) {
-      const data = await res.json();
-      setError(data.error ?? "회원가입에 실패했습니다.");
+    try {
+      await register(email, password, name || undefined);
+      // Auto-login after registration
+      try {
+        await login(email, password);
+      } catch {
+        // If auto-login fails, redirect to signin
+        router.push("/auth/signin");
+        return;
+      }
+      router.push("/");
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : "회원가입에 실패했습니다."
+      );
+    } finally {
       setLoading(false);
-      return;
     }
-
-    await signIn("credentials", { email, password, redirect: false });
-    router.push("/");
   }
 
   return (

@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
+import { apiClient } from "@/lib/api-client";
 
 interface Props {
   spaceId: string;
@@ -23,36 +24,20 @@ export default function FileUploader({ spaceId, onUploadComplete }: Props) {
         const formData = new FormData();
         formData.append("file", file);
 
-        const uploadRes = await fetch(`/api/spaces/${spaceId}/materials`, {
-          method: "POST",
-          body: formData,
-        });
+        const material = await apiClient.upload(`/api/spaces/${spaceId}/materials`, formData);
 
-        if (!uploadRes.ok) {
-          const err = await uploadRes.json();
-          setUploadStatus(`오류: ${err.error}`);
-          return;
-        }
-
-        const material = await uploadRes.json();
         setUploadStatus("AI 분석 중... (요약, 핵심포인트, 문제 생성)");
 
-        const processRes = await fetch(`/api/materials/${material.id}/process`, {
-          method: "POST",
-        });
-
-        if (!processRes.ok) {
-          setUploadStatus("AI 처리 중 오류가 발생했습니다.");
-          return;
-        }
+        await apiClient.post(`/api/materials/${material.id}/process`);
 
         setUploadStatus("완료!");
         setTimeout(() => {
           setUploadStatus("");
           onUploadComplete(material.id);
         }, 1000);
-      } catch {
-        setUploadStatus("오류가 발생했습니다. 다시 시도해주세요.");
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "오류가 발생했습니다.";
+        setUploadStatus(`오류: ${msg}`);
       } finally {
         setUploading(false);
       }

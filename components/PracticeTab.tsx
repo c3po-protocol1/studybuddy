@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { apiClient } from "@/lib/api-client";
 
 interface Question {
   id: string;
@@ -41,12 +42,15 @@ export default function PracticeTab({ material }: Props) {
 
   const fetchQuestions = useCallback(async () => {
     if (!material) return;
-    const res = await fetch(`/api/adaptive?materialId=${material.id}`);
-    const data = await res.json();
-    setQuestions(data);
-    setCurrentIndex(0);
-    setResult(null);
-    setUserAnswer("");
+    try {
+      const data = await apiClient.get(`/api/adaptive?materialId=${material.id}`);
+      setQuestions(Array.isArray(data) ? data : []);
+      setCurrentIndex(0);
+      setResult(null);
+      setUserAnswer("");
+    } catch {
+      setQuestions([]);
+    }
   }, [material]);
 
   useEffect(() => {
@@ -57,15 +61,15 @@ export default function PracticeTab({ material }: Props) {
     if (!userAnswer.trim() || !questions[currentIndex]) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/questions/${questions[currentIndex].id}/answer`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userAnswer }),
-      });
-      const data = await res.json();
+      const data = await apiClient.post(
+        `/api/questions/${questions[currentIndex].id}/answer`,
+        { userAnswer }
+      );
       setResult(data);
       if (data.isCorrect) setStats((s) => ({ ...s, correct: s.correct + 1 }));
       else setStats((s) => ({ ...s, wrong: s.wrong + 1 }));
+    } catch {
+      // handle error silently
     } finally {
       setLoading(false);
     }
@@ -83,14 +87,11 @@ export default function PracticeTab({ material }: Props) {
     if (!material) return;
     setFetchingAdaptive(true);
     try {
-      const res = await fetch("/api/adaptive", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ materialId: material.id }),
-      });
-      const data = await res.json();
+      const data = await apiClient.post("/api/adaptive", { materialId: material.id });
       alert(data.message);
       fetchQuestions();
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "오류가 발생했습니다.");
     } finally {
       setFetchingAdaptive(false);
     }

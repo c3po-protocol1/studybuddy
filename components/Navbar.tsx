@@ -1,12 +1,18 @@
 "use client";
 
-import { signOut, useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { getUser, logout } from "@/lib/auth-store";
+import type { AuthUser } from "@/lib/auth-store";
 
 export default function Navbar() {
-  const { data: session } = useSession();
+  const [user, setUser] = useState<AuthUser | null>(null);
 
-  if (!session) return null;
+  useEffect(() => {
+    setUser(getUser());
+  }, []);
+
+  if (!user) return null;
 
   return (
     <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
@@ -14,9 +20,9 @@ export default function Navbar() {
         StudyBuddy
       </Link>
       <div className="flex items-center gap-3">
-        <span className="text-sm text-gray-600">{session.user?.email}</span>
+        <span className="text-sm text-gray-600">{user.email}</span>
         <button
-          onClick={() => signOut({ callbackUrl: "/auth/signin" })}
+          onClick={() => logout()}
           className="text-sm text-gray-500 hover:text-gray-800 border border-gray-300 rounded-lg px-3 py-1 transition-colors"
         >
           로그아웃

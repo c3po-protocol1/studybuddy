@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { apiClient } from "@/lib/api-client";
 
 const EMOJI_OPTIONS = ["📚", "📖", "✏️", "🔬", "🧮", "🌍", "💡", "🎯", "📝", "🏫", "🎨", "🧠"];
 const COLOR_OPTIONS = [
@@ -27,15 +28,10 @@ export default function CreateSpaceModal({ onClose, onCreated }: Props) {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/spaces", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, emoji, color }),
-      });
-      if (!res.ok) { const d = await res.json(); setError(d.error); return; }
+      await apiClient.post("/api/spaces", { name, emoji, color });
       onCreated();
-    } catch {
-      setError("오류가 발생했습니다. 다시 시도해주세요.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "오류가 발생했습니다. 다시 시도해주세요.");
     } finally {
       setLoading(false);
     }

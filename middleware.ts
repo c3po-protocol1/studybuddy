@@ -1,19 +1,27 @@
-import { auth } from "@/auth";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-export default auth((req) => {
-  const { nextUrl, auth: session } = req;
-  const isLoggedIn = !!session;
-  const isAuthRoute = nextUrl.pathname.startsWith("/auth");
-  const isApiAuthRoute = nextUrl.pathname.startsWith("/api/auth");
+export function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
 
-  if (isApiAuthRoute) return NextResponse.next();
-  if (isAuthRoute) return NextResponse.next();
-  if (!isLoggedIn) {
-    return NextResponse.redirect(new URL("/auth/signin", nextUrl));
+  // Allow auth routes, API routes, Next.js internals, and static files
+  if (
+    pathname.startsWith("/auth/") ||
+    pathname.startsWith("/api/") ||
+    pathname.startsWith("/_next/") ||
+    pathname === "/favicon.ico"
+  ) {
+    return NextResponse.next();
   }
+
+  // Check for auth_token cookie
+  const token = req.cookies.get("auth_token")?.value;
+  if (!token) {
+    return NextResponse.redirect(new URL("/auth/signin", req.url));
+  }
+
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],

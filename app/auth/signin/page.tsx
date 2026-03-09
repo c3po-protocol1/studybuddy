@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { login } from "@/lib/auth-store";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -17,18 +17,17 @@ export default function SignInPage() {
     setError("");
     setLoading(true);
 
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-
-    setLoading(false);
-
-    if (result?.error) {
-      setError("이메일 또는 비밀번호가 올바르지 않습니다.");
-    } else {
+    try {
+      await login(email, password);
       router.push("/");
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "이메일 또는 비밀번호가 올바르지 않습니다."
+      );
+    } finally {
+      setLoading(false);
     }
   }
 
