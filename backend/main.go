@@ -22,11 +22,14 @@ func main() {
 
 	cfg := config.Load()
 
-	db, err := database.Connect(cfg.DatabasePath)
+	db, err := database.Connect(cfg.DatabaseURL)
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
-	defer db.Close()
+	sqlDB, err := db.DB()
+	if err == nil {
+		defer sqlDB.Close()
+	}
 
 	// Initialize handlers
 	authHandler := &handlers.AuthHandler{
@@ -86,7 +89,7 @@ func main() {
 	}
 
 	log.Printf("StudyBuddy Go backend starting on :%s", cfg.Port)
-	log.Printf("Database: %s", cfg.DatabasePath)
+	log.Printf("Database: %s", cfg.DatabaseURL)
 	if err := r.Run(":" + cfg.Port); err != nil {
 		log.Fatalf("server error: %v", err)
 	}

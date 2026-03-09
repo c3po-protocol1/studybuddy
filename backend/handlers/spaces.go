@@ -9,21 +9,22 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type SpaceHandler struct {
-	DB *sql.DB
+	DB *gorm.DB
 }
 
 func (h *SpaceHandler) GetSpaces(c *gin.Context) {
-	rows, err := h.DB.Query(`
+	rows, err := h.DB.Raw(`
 		SELECT s."id", s."name", s."emoji", s."color", s."createdAt",
 		       COUNT(m."id") as materialCount
 		FROM "Space" s
 		LEFT JOIN "Material" m ON m."spaceId" = s."id"
 		GROUP BY s."id"
 		ORDER BY s."createdAt" DESC
-	`)
+	`).Rows()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to query spaces"})
 		return
@@ -33,13 +34,11 @@ func (h *SpaceHandler) GetSpaces(c *gin.Context) {
 	spaces := []models.Space{}
 	for rows.Next() {
 		var sp models.Space
-		var createdAtStr string
 		var matCount int
-		if err := rows.Scan(&sp.ID, &sp.Name, &sp.Emoji, &sp.Color, &createdAtStr, &matCount); err != nil {
+		if err := rows.Scan(&sp.ID, &sp.Name, &sp.Emoji, &sp.Color, &sp.CreatedAt, &matCount); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to scan space"})
 			return
 		}
-		sp.CreatedAt = parseTime(createdAtStr)
 		sp.Count = &models.MaterialCount{Materials: matCount}
 		spaces = append(spaces, sp)
 	}
@@ -66,11 +65,11 @@ func (h *SpaceHandler) CreateSpace(c *gin.Context) {
 	}
 
 	id := uuid.New().String()
-	_, err := h.DB.Exec(
+	result := h.DB.Exec(
 		`INSERT INTO "Space" ("id", "name", "emoji", "color") VALUES (?, ?, ?, ?)`,
 		id, body.Name, body.Emoji, body.Color,
 	)
-	if err != nil {
+	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create space"})
 		return
 	}
@@ -91,19 +90,17 @@ func (h *SpaceHandler) GetSpace(c *gin.Context) {
 	spaceID := c.Param("id")
 
 	var sp models.Space
-	var createdAtStr string
-	err := h.DB.QueryRow(
+	err := h.DB.Raw(
 		`SELECT "id", "name", "emoji", "color", "createdAt" FROM "Space" WHERE "id" = ?`,
 		spaceID,
-	).Scan(&sp.ID, &sp.Name, &sp.Emoji, &sp.Color, &createdAtStr)
+	).Row().Scan(&sp.ID, &sp.Name, &sp.Emoji, &sp.Color, &sp.CreatedAt)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "space not found"})
 		return
 	}
-	sp.CreatedAt = parseTime(createdAtStr)
 
 	// Get materials with summary, keypoints count of questions
-	matRows, err := h.DB.Query(`
+	matRows, err := h.DB.Raw(`
 		SELECT m."id", m."spaceId", m."filename", m."status", m."createdAt",
 		       s."content",
 		       kp."points",
@@ -113,9 +110,9 @@ func (h *SpaceHandler) GetSpace(c *gin.Context) {
 		LEFT JOIN "KeyPoints" kp ON kp."materialId" = m."id"
 		LEFT JOIN "Question" q ON q."materialId" = m."id"
 		WHERE m."spaceId" = ?
-		GROUP BY m."id"
+		GROUP BY m."id", s."content", kp."points"
 		ORDER BY m."createdAt" ASC
-	`, spaceID)
+	`, spaceID).Rows()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to query materials"})
 		return
@@ -125,19 +122,17 @@ func (h *SpaceHandler) GetSpace(c *gin.Context) {
 	materials := []models.Material{}
 	for matRows.Next() {
 		var mat models.Material
-		var matCreatedAtStr string
 		var summaryContent sql.NullString
 		var kpPoints sql.NullString
 		var qCount int
 
 		if err := matRows.Scan(
-			&mat.ID, &mat.SpaceID, &mat.Filename, &mat.Status, &matCreatedAtStr,
+			&mat.ID, &mat.SpaceID, &mat.Filename, &mat.Status, &mat.CreatedAt,
 			&summaryContent, &kpPoints, &qCount,
 		); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to scan material"})
 			return
 		}
-		mat.CreatedAt = parseTime(matCreatedAtStr)
 
 		if summaryContent.Valid {
 			mat.Summary = &models.Summary{Content: summaryContent.String}
@@ -157,14 +152,13 @@ func (h *SpaceHandler) GetSpace(c *gin.Context) {
 func (h *SpaceHandler) DeleteSpace(c *gin.Context) {
 	spaceID := c.Param("id")
 
-	res, err := h.DB.Exec(`DELETE FROM "Space" WHERE "id" = ?`, spaceID)
-	if err != nil {
+	result := h.DB.Exec(`DELETE FROM "Space" WHERE "id" = ?`, spaceID)
+	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete space"})
 		return
 	}
 
-	rowsAffected, _ := res.RowsAffected()
-	if rowsAffected == 0 {
+	if result.RowsAffected == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": "space not found"})
 		return
 	}

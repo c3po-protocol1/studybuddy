@@ -7,10 +7,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type QuestionHandler struct {
-	DB *sql.DB
+	DB *gorm.DB
 }
 
 // AnswerQuestion handles POST /api/questions/:id/answer
@@ -31,10 +32,10 @@ func (h *QuestionHandler) AnswerQuestion(c *gin.Context) {
 		explanation string
 		qType       string
 	)
-	err := h.DB.QueryRow(
+	err := h.DB.Raw(
 		`SELECT "answer", "explanation", "type" FROM "Question" WHERE "id" = ?`,
 		questionID,
-	).Scan(&answer, &explanation, &qType)
+	).Row().Scan(&answer, &explanation, &qType)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "question not found"})
 		return
@@ -47,16 +48,12 @@ func (h *QuestionHandler) AnswerQuestion(c *gin.Context) {
 
 	// Insert answer history
 	historyID := uuid.New().String()
-	isCorrectInt := 0
-	if isCorrect {
-		isCorrectInt = 1
-	}
 
-	_, err = h.DB.Exec(
+	result := h.DB.Exec(
 		`INSERT INTO "AnswerHistory" ("id", "questionId", "isCorrect", "userAnswer") VALUES (?, ?, ?, ?)`,
-		historyID, questionID, isCorrectInt, body.UserAnswer,
+		historyID, questionID, isCorrect, body.UserAnswer,
 	)
-	if err != nil {
+	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to record answer"})
 		return
 	}

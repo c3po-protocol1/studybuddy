@@ -16,8 +16,8 @@
 | 영역 | 기술 |
 |------|------|
 | Frontend | Next.js 16 (App Router), TypeScript, Tailwind CSS |
-| Backend | **Go 1.22** (Gin, JWT, SQLite) — port 8080 |
-| Database | SQLite (Prisma migrations + raw SQL via Go) |
+| Backend | **Go 1.22** (Gin, GORM, JWT, PostgreSQL) — port 8080 |
+| Database | **PostgreSQL 16** (Docker Compose for local dev) |
 | AI | Anthropic Claude API (`claude-sonnet-4-6`) |
 | Auth | JWT (HS256) stored in `localStorage` + cookie |
 
@@ -45,21 +45,33 @@ cp .env.local.example .env.local
 
 ```env
 ANTHROPIC_API_KEY=your_anthropic_api_key_here
-DATABASE_URL="file:./prisma/dev.db"
-AUTH_SECRET=your_jwt_secret_here
+DATABASE_URL="postgres://studybuddy:studybuddy@localhost:5432/studybuddy?sslmode=disable"
+AUTH_SECRET=your_jwt_secret_here_change_in_production
 NEXT_PUBLIC_API_URL=http://localhost:8080
 ```
 
 > API 키 발급: https://console.anthropic.com
 
-### 3. 데이터베이스 초기화 | Database Setup
+### 3. 데이터베이스 시작 | Start Database
 
-Prisma로 마이그레이션을 실행하면 SQLite DB 파일(`prisma/dev.db`)이 생성됩니다.
-Go 백엔드는 같은 DB 파일을 사용하며, 테이블이 없으면 자동으로 생성합니다.
+Docker Compose로 PostgreSQL을 로컬에서 실행합니다:
 
 ```bash
-npx prisma migrate dev
-npx prisma generate
+docker compose up -d
+```
+
+PostgreSQL이 준비되면 (`localhost:5432`), Go 백엔드가 시작 시 자동으로 테이블을 생성합니다 (GORM AutoMigrate).
+
+PostgreSQL 중지:
+
+```bash
+docker compose down
+```
+
+데이터까지 삭제:
+
+```bash
+docker compose down -v
 ```
 
 ### 4. 서버 실행 | Run Servers
@@ -100,16 +112,16 @@ backend/
 ├── main.go                # 서버 진입점, 라우터 설정
 ├── go.mod / go.sum
 ├── config/
-│   └── config.go          # 환경 변수 로드
+│   └── config.go          # 환경 변수 로드 (DATABASE_URL 등)
 ├── database/
-│   └── db.go              # SQLite 연결, 테이블 생성
+│   └── db.go              # GORM + PostgreSQL 연결, AutoMigrate
 ├── middleware/
 │   └── auth.go            # JWT 검증 미들웨어
 ├── models/
-│   └── models.go          # 응답 구조체
+│   └── models.go          # GORM 모델 + 응답 구조체
 ├── handlers/
 │   ├── auth.go            # 인증 (register, login)
-│   ├── spaces.go          # 스터디 공간 CRUD + 파일 업로드
+│   ├── spaces.go          # 스터디 공간 CRUD
 │   ├── materials.go       # 자료 관리 + AI 처리
 │   ├── questions.go       # 문제 답변 제출
 │   └── adaptive.go        # 적응형 학습
@@ -151,7 +163,8 @@ JWT 토큰이 `localStorage`와 `auth_token` 쿠키에 저장됩니다.
 - `github.com/gin-contrib/cors` — CORS 설정
 - `github.com/golang-jwt/jwt/v5` — JWT
 - `golang.org/x/crypto/bcrypt` — 비밀번호 해싱
-- `modernc.org/sqlite` — Pure Go SQLite (CGO 불필요)
+- `gorm.io/gorm` — ORM (AutoMigrate, connection management)
+- `gorm.io/driver/postgres` — PostgreSQL GORM 드라이버 (pgx)
 - `github.com/google/uuid` — UUID 생성
 - `github.com/joho/godotenv` — .env 파일 로드
 
@@ -162,6 +175,7 @@ JWT 토큰이 `localStorage`와 `auth_token` 쿠키에 저장됩니다.
 ```
 studybuddy/
 ├── backend/                   # Go 백엔드 (포트 8080)
+├── docker-compose.yml         # PostgreSQL 로컬 개발 환경
 ├── agents/                    # Next.js AI 에이전트 (레거시)
 ├── app/
 │   ├── auth/                  # 로그인/회원가입 페이지
@@ -178,7 +192,7 @@ studybuddy/
 │   ├── auth-store.ts          # JWT 인증 유틸리티
 │   └── prisma.ts              # Prisma 클라이언트
 └── prisma/
-    └── schema.prisma          # DB 스키마
+    └── schema.prisma          # DB 스키마 (레거시)
 ```
 
 ## DB 스키마 | Database Schema
@@ -190,6 +204,8 @@ studybuddy/
 - **KeyPoints** — AI 추출 핵심포인트 (JSON 배열)
 - **Question** — AI 생성 연습 문제 (객관식/단답형)
 - **AnswerHistory** — 사용자 답변 이력 (맞춤 학습에 활용)
+
+테이블은 Go 백엔드 시작 시 GORM AutoMigrate로 자동 생성됩니다.
 
 ## 라이선스 | License
 

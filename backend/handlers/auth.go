@@ -9,10 +9,11 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 type AuthHandler struct {
-	DB        *sql.DB
+	DB        *gorm.DB
 	JWTSecret string
 }
 
@@ -52,7 +53,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 
 	// Check if email already exists
 	var existingID string
-	err := h.DB.QueryRow(`SELECT "id" FROM "User" WHERE "email" = ?`, req.Email).Scan(&existingID)
+	err := h.DB.Raw(`SELECT "id" FROM "User" WHERE "email" = ?`, req.Email).Row().Scan(&existingID)
 	if err == nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "email already exists"})
 		return
@@ -65,11 +66,11 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	}
 
 	id := uuid.New().String()
-	_, err = h.DB.Exec(
+	result := h.DB.Exec(
 		`INSERT INTO "User" ("id", "email", "password", "name") VALUES (?, ?, ?, ?)`,
 		id, req.Email, string(hashed), req.Name,
 	)
-	if err != nil {
+	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create user"})
 		return
 	}
@@ -100,10 +101,10 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		name     sql.NullString
 	)
 
-	err := h.DB.QueryRow(
+	err := h.DB.Raw(
 		`SELECT "id", "email", "password", "name" FROM "User" WHERE "email" = ?`,
 		req.Email,
-	).Scan(&id, &email, &password, &name)
+	).Row().Scan(&id, &email, &password, &name)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
 		return

@@ -10,10 +10,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type AdaptiveHandler struct {
-	DB *sql.DB
+	DB *gorm.DB
 }
 
 // GetAdaptive handles GET /api/adaptive?materialId=xxx
@@ -26,16 +27,16 @@ func (h *AdaptiveHandler) GetAdaptive(c *gin.Context) {
 	}
 
 	// Get all questions with their answer history
-	rows, err := h.DB.Query(`
+	rows, err := h.DB.Raw(`
 		SELECT q."id", q."materialId", q."type", q."question", q."options",
 		       q."answer", q."explanation", q."topic", q."createdAt",
-		       SUM(CASE WHEN ah."isCorrect" = 0 THEN 1 ELSE 0 END) as wrongCount
+		       SUM(CASE WHEN ah."isCorrect" = false THEN 1 ELSE 0 END) as wrongCount
 		FROM "Question" q
 		LEFT JOIN "AnswerHistory" ah ON ah."questionId" = q."id"
 		WHERE q."materialId" = ?
 		GROUP BY q."id"
 		ORDER BY wrongCount DESC, q."createdAt" ASC
-	`, materialID)
+	`, materialID).Rows()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to query questions"})
 		return
@@ -45,16 +46,14 @@ func (h *AdaptiveHandler) GetAdaptive(c *gin.Context) {
 	questions := []models.Question{}
 	for rows.Next() {
 		var q models.Question
-		var createdAtStr string
 		var options sql.NullString
 		var wrongCount int
 		if err := rows.Scan(
 			&q.ID, &q.MaterialID, &q.Type, &q.QuestionText, &options,
-			&q.Answer, &q.Explanation, &q.Topic, &createdAtStr, &wrongCount,
+			&q.Answer, &q.Explanation, &q.Topic, &q.CreatedAt, &wrongCount,
 		); err != nil {
 			continue
 		}
-		q.CreatedAt = parseTime(createdAtStr)
 		if options.Valid {
 			q.Options = &options.String
 		}
@@ -77,21 +76,21 @@ func (h *AdaptiveHandler) PostAdaptive(c *gin.Context) {
 
 	// Get material content
 	var content string
-	err := h.DB.QueryRow(`SELECT "content" FROM "Material" WHERE "id" = ?`, body.MaterialID).Scan(&content)
+	err := h.DB.Raw(`SELECT "content" FROM "Material" WHERE "id" = ?`, body.MaterialID).Row().Scan(&content)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "material not found"})
 		return
 	}
 
 	// Get last 20 wrong answers with their topics
-	rows, err := h.DB.Query(`
+	rows, err := h.DB.Raw(`
 		SELECT DISTINCT q."topic"
 		FROM "AnswerHistory" ah
 		JOIN "Question" q ON q."id" = ah."questionId"
-		WHERE q."materialId" = ? AND ah."isCorrect" = 0
+		WHERE q."materialId" = ? AND ah."isCorrect" = false
 		ORDER BY ah."answeredAt" DESC
 		LIMIT 20
-	`, body.MaterialID)
+	`, body.MaterialID).Rows()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to query answer history"})
 		return
@@ -138,12 +137,12 @@ func (h *AdaptiveHandler) PostAdaptive(c *gin.Context) {
 			optionsJSON = &s
 		}
 
-		_, err = h.DB.Exec(
+		result := h.DB.Exec(
 			`INSERT INTO "Question" ("id", "materialId", "type", "question", "options", "answer", "explanation", "topic")
 			 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 			qID, body.MaterialID, q.Type, q.Question, optionsJSON, q.Answer, q.Explanation, q.Topic,
 		)
-		if err != nil {
+		if result.Error != nil {
 			continue
 		}
 
