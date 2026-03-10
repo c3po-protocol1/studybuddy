@@ -26,6 +26,7 @@ func Connect(dsn string) (*gorm.DB, error) {
 		&models.KeyPoints{},
 		&models.Question{},
 		&models.AnswerHistory{},
+		&models.UserSettings{},
 	); err != nil {
 		log.Printf("Warning: AutoMigrate error: %v", err)
 	}

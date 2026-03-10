@@ -98,3 +98,13 @@ type AnswerHistory struct {
 }
 
 func (AnswerHistory) TableName() string { return "AnswerHistory" }
+
+// UserSettings stores per-user AI configuration
+type UserSettings struct {
+	UserID          string    `json:"userId" gorm:"primaryKey;column:userId"`
+	AnthropicAPIKey string    `json:"anthropicApiKey" gorm:"column:anthropicApiKey;not null;default:''"`
+	LLMModel        string    `json:"llmModel" gorm:"column:llmModel;not null;default:'claude-3-5-haiku-20241022'"`
+	UpdatedAt       time.Time `json:"updatedAt" gorm:"column:updatedAt;autoUpdateTime"`
+}
+
+func (UserSettings) TableName() string { return "UserSettings" }

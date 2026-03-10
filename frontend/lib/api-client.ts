@@ -68,6 +68,15 @@ export const apiClient = {
     return handleResponse(res);
   },
 
+  async put(path: string, body?: unknown) {
+    const res = await fetch(`${API_BASE}${path}`, {
+      method: "PUT",
+      headers: authHeaders(),
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+    return handleResponse(res);
+  },
+
   async delete(path: string) {
     const res = await fetch(`${API_BASE}${path}`, {
       method: "DELETE",

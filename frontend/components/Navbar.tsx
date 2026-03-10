@@ -21,6 +21,12 @@ export default function Navbar() {
       </Link>
       <div className="flex items-center gap-3">
         <span className="text-sm text-gray-600">{user.email}</span>
+        <Link
+          href="/settings"
+          className="text-sm text-gray-500 hover:text-gray-800 border border-gray-300 rounded-lg px-3 py-1 transition-colors"
+        >
+          설정
+        </Link>
         <button
           onClick={() => logout()}
           className="text-sm text-gray-500 hover:text-gray-800 border border-gray-300 rounded-lg px-3 py-1 transition-colors"

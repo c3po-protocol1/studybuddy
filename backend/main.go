@@ -41,6 +41,7 @@ func main() {
 	questionHandler := &handlers.QuestionHandler{DB: db}
 	adaptiveHandler := &handlers.AdaptiveHandler{DB: db}
 	ragHandler := &handlers.RagHandler{}
+	settingsHandler := &handlers.SettingsHandler{DB: db}
 
 	r := gin.Default()
 
@@ -89,6 +90,10 @@ func main() {
 
 			// RAG document ingest
 			protected.POST("/rag/ingest", ragHandler.IngestRAG)
+
+			// User settings
+			protected.GET("/settings", settingsHandler.GetSettings)
+			protected.PUT("/settings", settingsHandler.PutSettings)
 		}
 	}
 
