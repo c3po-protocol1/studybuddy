@@ -29,7 +29,7 @@
 
 ```bash
 # Frontend
-npm install
+cd frontend && npm install
 
 # Backend (Go 1.22+)
 cd backend && go mod download
@@ -38,10 +38,10 @@ cd backend && go mod download
 ### 2. 환경 변수 설정 | Configure Environment
 
 ```bash
-cp .env.local.example .env.local
+cp frontend/.env.local.example frontend/.env.local
 ```
 
-`.env.local`을 열고 필요한 값을 입력하세요:
+`frontend/.env.local`을 열고 필요한 값을 입력하세요:
 
 ```env
 ANTHROPIC_API_KEY=your_anthropic_api_key_here
@@ -96,7 +96,7 @@ go build -o studybuddy-server .
 #### Next.js 프론트엔드 (port 3000)
 
 ```bash
-npm run dev
+cd frontend && npm run dev
 ```
 
 브라우저에서 [http://localhost:3000](http://localhost:3000) 접속
@@ -175,24 +175,26 @@ JWT 토큰이 `localStorage`와 `auth_token` 쿠키에 저장됩니다.
 ```
 studybuddy/
 ├── backend/                   # Go 백엔드 (포트 8080)
-├── docker-compose.yml         # PostgreSQL 로컬 개발 환경
-├── agents/                    # Next.js AI 에이전트 (레거시)
-├── app/
-│   ├── auth/                  # 로그인/회원가입 페이지
-│   ├── spaces/[id]/           # 스터디 공간 상세 페이지
-│   └── page.tsx               # 대시보드 (홈)
-├── components/
-│   ├── CreateSpaceModal.tsx
-│   ├── FileUploader.tsx
-│   ├── SummaryTab.tsx
-│   ├── KeyPointsTab.tsx
-│   └── PracticeTab.tsx
-├── lib/
-│   ├── api-client.ts          # Go 백엔드 API 클라이언트
-│   ├── auth-store.ts          # JWT 인증 유틸리티
-│   └── prisma.ts              # Prisma 클라이언트
-└── prisma/
-    └── schema.prisma          # DB 스키마 (레거시)
+├── frontend/                  # Next.js 프론트엔드 (포트 3000)
+│   ├── agents/                # AI 에이전트 (레거시)
+│   ├── app/
+│   │   ├── auth/              # 로그인/회원가입 페이지
+│   │   ├── spaces/[id]/       # 스터디 공간 상세 페이지
+│   │   └── page.tsx           # 대시보드 (홈)
+│   ├── components/
+│   │   ├── CreateSpaceModal.tsx
+│   │   ├── FileUploader.tsx
+│   │   ├── SummaryTab.tsx
+│   │   ├── KeyPointsTab.tsx
+│   │   └── PracticeTab.tsx
+│   ├── lib/
+│   │   ├── api-client.ts      # Go 백엔드 API 클라이언트
+│   │   ├── auth-store.ts      # JWT 인증 유틸리티
+│   │   └── prisma.ts          # Prisma 클라이언트
+│   ├── prisma/
+│   │   └── schema.prisma      # DB 스키마 (레거시)
+│   └── package.json
+└── docker-compose.yml         # PostgreSQL 로컬 개발 환경
 ```
 
 ## DB 스키마 | Database Schema
