@@ -64,15 +64,15 @@ export default function SpacePage() {
 
   // Auto-select first material
   useEffect(() => {
-    if (space?.materials.length && !selectedMaterialId) {
-      setSelectedMaterialId(space.materials[0].id);
+    if (space?.materials?.length && !selectedMaterialId) {
+      setSelectedMaterialId(space.materials?.[0]?.id ?? null);
     }
   }, [space, selectedMaterialId]);
 
   // Poll for processing materials
   useEffect(() => {
     if (!space) return;
-    const processing = space.materials.filter((m) => m.status === "processing");
+    const processing = (space.materials ?? []).filter((m) => m.status === "processing");
     if (processing.length === 0) return;
 
     const newPolling = new Set(processing.map((m) => m.id));
@@ -103,7 +103,7 @@ export default function SpacePage() {
     fetchSpace();
   };
 
-  const selectedMaterial = space?.materials.find((m) => m.id === selectedMaterialId) ?? null;
+  const selectedMaterial = space?.materials?.find((m) => m.id === selectedMaterialId) ?? null;
 
   if (loading) {
     return (
@@ -132,7 +132,7 @@ export default function SpacePage() {
           </div>
           <h1 className="font-semibold text-gray-900">{space.name}</h1>
           <span className="ml-1 text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">
-            자료 {space.materials.length}개
+            자료 {space.materials?.length ?? 0}개
           </span>
         </div>
       </header>
@@ -158,10 +158,10 @@ export default function SpacePage() {
           )}
 
           <div className="flex-1 overflow-y-auto p-3 space-y-1">
-            {space.materials.length === 0 ? (
+            {(space.materials?.length ?? 0) === 0 ? (
               <p className="text-center text-xs text-gray-400 py-6">자료가 없습니다.</p>
             ) : (
-              space.materials.map((mat) => {
+              (space.materials ?? []).map((mat) => {
                 const statusInfo = STATUS_LABEL[mat.status] ?? STATUS_LABEL.pending;
                 return (
                   <button

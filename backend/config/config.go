@@ -1,12 +1,9 @@
 package config
 
-import (
-	"os"
-	"strings"
-)
+import "os"
 
 type Config struct {
-	DatabasePath    string
+	DatabaseURL     string
 	JWTSecret       string
 	AnthropicAPIKey string
 	Port            string
@@ -14,13 +11,8 @@ type Config struct {
 
 func Load() *Config {
 	dbURL := os.Getenv("DATABASE_URL")
-	dbPath := ""
-	if dbURL != "" {
-		// Strip "file:" prefix if present
-		dbPath = strings.TrimPrefix(dbURL, "file:")
-	}
-	if dbPath == "" {
-		dbPath = "../prisma/dev.db"
+	if dbURL == "" {
+		dbURL = "postgres://studybuddy:studybuddy@localhost:5432/studybuddy?sslmode=disable"
 	}
 
 	port := os.Getenv("PORT")
@@ -34,7 +26,7 @@ func Load() *Config {
 	}
 
 	return &Config{
-		DatabasePath:    dbPath,
+		DatabaseURL:     dbURL,
 		JWTSecret:       jwtSecret,
 		AnthropicAPIKey: os.Getenv("ANTHROPIC_API_KEY"),
 		Port:            port,

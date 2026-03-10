@@ -17,10 +17,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type MaterialHandler struct {
-	DB *sql.DB
+	DB *gorm.DB
 }
 
 // UploadMaterial handles POST /api/spaces/:id/materials
@@ -29,7 +30,7 @@ func (h *MaterialHandler) UploadMaterial(c *gin.Context) {
 
 	// Verify space exists
 	var spaceExists bool
-	err := h.DB.QueryRow(`SELECT COUNT(*) > 0 FROM "Space" WHERE "id" = ?`, spaceID).Scan(&spaceExists)
+	err := h.DB.Raw(`SELECT COUNT(*) > 0 FROM "Space" WHERE "id" = ?`, spaceID).Row().Scan(&spaceExists)
 	if err != nil || !spaceExists {
 		c.JSON(http.StatusNotFound, gin.H{"error": "space not found"})
 		return
@@ -84,11 +85,11 @@ func (h *MaterialHandler) UploadMaterial(c *gin.Context) {
 	}
 
 	id := uuid.New().String()
-	_, err = h.DB.Exec(
+	result := h.DB.Exec(
 		`INSERT INTO "Material" ("id", "spaceId", "filename", "content", "status") VALUES (?, ?, ?, ?, 'pending')`,
 		id, spaceID, filename, content,
 	)
-	if err != nil {
+	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save material"})
 		return
 	}
@@ -107,12 +108,12 @@ func (h *MaterialHandler) UploadMaterial(c *gin.Context) {
 func (h *MaterialHandler) GetMaterials(c *gin.Context) {
 	spaceID := c.Param("id")
 
-	rows, err := h.DB.Query(`
+	rows, err := h.DB.Raw(`
 		SELECT "id", "spaceId", "filename", "status", "createdAt"
 		FROM "Material"
 		WHERE "spaceId" = ?
 		ORDER BY "createdAt" ASC
-	`, spaceID)
+	`, spaceID).Rows()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to query materials"})
 		return
@@ -122,12 +123,10 @@ func (h *MaterialHandler) GetMaterials(c *gin.Context) {
 	materials := []models.Material{}
 	for rows.Next() {
 		var mat models.Material
-		var createdAtStr string
-		if err := rows.Scan(&mat.ID, &mat.SpaceID, &mat.Filename, &mat.Status, &createdAtStr); err != nil {
+		if err := rows.Scan(&mat.ID, &mat.SpaceID, &mat.Filename, &mat.Status, &mat.CreatedAt); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to scan material"})
 			return
 		}
-		mat.CreatedAt = parseTime(createdAtStr)
 		materials = append(materials, mat)
 	}
 
@@ -139,23 +138,21 @@ func (h *MaterialHandler) GetMaterial(c *gin.Context) {
 	materialID := c.Param("id")
 
 	var mat models.Material
-	var createdAtStr string
-	err := h.DB.QueryRow(
+	err := h.DB.Raw(
 		`SELECT "id", "spaceId", "filename", "content", "status", "createdAt" FROM "Material" WHERE "id" = ?`,
 		materialID,
-	).Scan(&mat.ID, &mat.SpaceID, &mat.Filename, &mat.Content, &mat.Status, &createdAtStr)
+	).Row().Scan(&mat.ID, &mat.SpaceID, &mat.Filename, &mat.Content, &mat.Status, &mat.CreatedAt)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "material not found"})
 		return
 	}
-	mat.CreatedAt = parseTime(createdAtStr)
 
 	// Get summary
 	var summaryContent sql.NullString
 	var summaryID sql.NullString
-	err = h.DB.QueryRow(
+	err = h.DB.Raw(
 		`SELECT "id", "content" FROM "Summary" WHERE "materialId" = ?`, materialID,
-	).Scan(&summaryID, &summaryContent)
+	).Row().Scan(&summaryID, &summaryContent)
 	if err == nil && summaryContent.Valid {
 		mat.Summary = &models.Summary{
 			ID:         summaryID.String,
@@ -167,9 +164,9 @@ func (h *MaterialHandler) GetMaterial(c *gin.Context) {
 	// Get key points
 	var kpID sql.NullString
 	var kpPoints sql.NullString
-	err = h.DB.QueryRow(
+	err = h.DB.Raw(
 		`SELECT "id", "points" FROM "KeyPoints" WHERE "materialId" = ?`, materialID,
-	).Scan(&kpID, &kpPoints)
+	).Row().Scan(&kpID, &kpPoints)
 	if err == nil && kpPoints.Valid {
 		mat.KeyPoints = &models.KeyPoints{
 			ID:         kpID.String,
@@ -179,12 +176,12 @@ func (h *MaterialHandler) GetMaterial(c *gin.Context) {
 	}
 
 	// Get questions ordered by createdAt ASC
-	qRows, err := h.DB.Query(`
+	qRows, err := h.DB.Raw(`
 		SELECT "id", "materialId", "type", "question", "options", "answer", "explanation", "topic", "createdAt"
 		FROM "Question"
 		WHERE "materialId" = ?
 		ORDER BY "createdAt" ASC
-	`, materialID)
+	`, materialID).Rows()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to query questions"})
 		return
@@ -194,15 +191,13 @@ func (h *MaterialHandler) GetMaterial(c *gin.Context) {
 	questions := []models.Question{}
 	for qRows.Next() {
 		var q models.Question
-		var qCreatedAtStr string
 		var options sql.NullString
 		if err := qRows.Scan(
 			&q.ID, &q.MaterialID, &q.Type, &q.QuestionText, &options,
-			&q.Answer, &q.Explanation, &q.Topic, &qCreatedAtStr,
+			&q.Answer, &q.Explanation, &q.Topic, &q.CreatedAt,
 		); err != nil {
 			continue
 		}
-		q.CreatedAt = parseTime(qCreatedAtStr)
 		if options.Valid {
 			q.Options = &options.String
 		}
@@ -217,14 +212,13 @@ func (h *MaterialHandler) GetMaterial(c *gin.Context) {
 func (h *MaterialHandler) DeleteMaterial(c *gin.Context) {
 	materialID := c.Param("id")
 
-	res, err := h.DB.Exec(`DELETE FROM "Material" WHERE "id" = ?`, materialID)
-	if err != nil {
+	result := h.DB.Exec(`DELETE FROM "Material" WHERE "id" = ?`, materialID)
+	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete material"})
 		return
 	}
 
-	rowsAffected, _ := res.RowsAffected()
-	if rowsAffected == 0 {
+	if result.RowsAffected == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": "material not found"})
 		return
 	}
@@ -238,15 +232,15 @@ func (h *MaterialHandler) ProcessMaterial(c *gin.Context) {
 
 	// Get material content
 	var content string
-	err := h.DB.QueryRow(`SELECT "content" FROM "Material" WHERE "id" = ?`, materialID).Scan(&content)
+	err := h.DB.Raw(`SELECT "content" FROM "Material" WHERE "id" = ?`, materialID).Row().Scan(&content)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "material not found"})
 		return
 	}
 
 	// Set status to processing
-	_, err = h.DB.Exec(`UPDATE "Material" SET "status" = 'processing' WHERE "id" = ?`, materialID)
-	if err != nil {
+	result := h.DB.Exec(`UPDATE "Material" SET "status" = 'processing' WHERE "id" = ?`, materialID)
+	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update status"})
 		return
 	}
@@ -296,31 +290,29 @@ func (h *MaterialHandler) ProcessMaterial(c *gin.Context) {
 		return
 	}
 
-	// Upsert summary
+	// Upsert summary (PostgreSQL ON CONFLICT)
 	summaryID := uuid.New().String()
-	_, err = h.DB.Exec(
-		`INSERT OR REPLACE INTO "Summary" ("id", "materialId", "content") VALUES (
-			COALESCE((SELECT "id" FROM "Summary" WHERE "materialId" = ?), ?),
-			?, ?
-		)`,
+	result = h.DB.Exec(
+		`INSERT INTO "Summary" ("id", "materialId", "content")
+		 VALUES (COALESCE((SELECT "id" FROM "Summary" WHERE "materialId" = ?), ?), ?, ?)
+		 ON CONFLICT ("materialId") DO UPDATE SET "content" = EXCLUDED."content"`,
 		materialID, summaryID, materialID, summaryContent,
 	)
-	if err != nil {
+	if result.Error != nil {
 		h.DB.Exec(`UPDATE "Material" SET "status" = 'error' WHERE "id" = ?`, materialID)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save summary"})
 		return
 	}
 
-	// Upsert key points
+	// Upsert key points (PostgreSQL ON CONFLICT)
 	kpID := uuid.New().String()
-	_, err = h.DB.Exec(
-		`INSERT OR REPLACE INTO "KeyPoints" ("id", "materialId", "points") VALUES (
-			COALESCE((SELECT "id" FROM "KeyPoints" WHERE "materialId" = ?), ?),
-			?, ?
-		)`,
+	result = h.DB.Exec(
+		`INSERT INTO "KeyPoints" ("id", "materialId", "points")
+		 VALUES (COALESCE((SELECT "id" FROM "KeyPoints" WHERE "materialId" = ?), ?), ?, ?)
+		 ON CONFLICT ("materialId") DO UPDATE SET "points" = EXCLUDED."points"`,
 		materialID, kpID, materialID, kpJSON,
 	)
-	if err != nil {
+	if result.Error != nil {
 		h.DB.Exec(`UPDATE "Material" SET "status" = 'error' WHERE "id" = ?`, materialID)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save key points"})
 		return
@@ -338,15 +330,11 @@ func (h *MaterialHandler) ProcessMaterial(c *gin.Context) {
 			optionsJSON = &s
 		}
 
-		_, err = h.DB.Exec(
+		h.DB.Exec(
 			`INSERT INTO "Question" ("id", "materialId", "type", "question", "options", "answer", "explanation", "topic")
 			 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 			qID, materialID, q.Type, q.Question, optionsJSON, q.Answer, q.Explanation, q.Topic,
 		)
-		if err != nil {
-			// Non-fatal, continue
-			continue
-		}
 	}
 
 	// Set status to done
@@ -403,7 +391,7 @@ func isPrintableText(s string) bool {
 	return ratio > 0.7
 }
 
-// parseTime parses common SQLite datetime strings
+// parseTime is kept for compatibility but PostgreSQL returns time.Time natively
 func parseTime(s string) time.Time {
 	formats := []string{
 		time.RFC3339,
