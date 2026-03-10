@@ -40,6 +40,7 @@ func main() {
 	materialHandler := &handlers.MaterialHandler{DB: db}
 	questionHandler := &handlers.QuestionHandler{DB: db}
 	adaptiveHandler := &handlers.AdaptiveHandler{DB: db}
+	ragHandler := &handlers.RagHandler{}
 
 	r := gin.Default()
 
@@ -85,6 +86,9 @@ func main() {
 			// Adaptive learning
 			protected.GET("/adaptive", adaptiveHandler.GetAdaptive)
 			protected.POST("/adaptive", adaptiveHandler.PostAdaptive)
+
+			// RAG document ingest
+			protected.POST("/rag/ingest", ragHandler.IngestRAG)
 		}
 	}
 

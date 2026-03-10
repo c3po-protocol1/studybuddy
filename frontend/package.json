@@ -24,7 +24,13 @@
     "react-dropzone": "^15.0.0"
   },
   "devDependencies": {
+    "@jest/globals": "^30.3.0",
+    "@swc/core": "^1.15.18",
+    "@swc/jest": "^0.2.39",
     "@tailwindcss/postcss": "^4",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^20",
     "@types/pdf-parse": "^1.1.5",
     "@types/react": "^19",
@@ -32,6 +38,8 @@
     "dotenv": "^17.3.1",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "jest": "^30.3.0",
+    "jest-environment-jsdom": "^30.3.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
