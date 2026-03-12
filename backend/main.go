@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 
+	"studybuddy-backend/agents"
 	"studybuddy-backend/config"
 	"studybuddy-backend/database"
 	"studybuddy-backend/handlers"
@@ -21,6 +22,9 @@ func main() {
 	godotenv.Load(".env.local")
 
 	cfg := config.Load()
+
+	// Configure Claude agents with API key and model from env
+	agents.Configure(cfg.AnthropicAPIKey, cfg.ClaudeModel)
 
 	db, err := database.Connect(cfg.DatabaseURL)
 	if err != nil {
@@ -47,10 +51,10 @@ func main() {
 
 	// CORS configuration
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000", "*"},
+		AllowOrigins:     []string{"*"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
 		AllowHeaders:     []string{"Authorization", "Content-Type", "X-Requested-With"},
-		AllowCredentials: true,
+		AllowCredentials: false,
 	}))
 
 	api := r.Group("/api")
@@ -98,7 +102,7 @@ func main() {
 	}
 
 	log.Printf("StudyBuddy Go backend starting on :%s", cfg.Port)
-	log.Printf("Database: %s", cfg.DatabaseURL)
+	log.Printf("Claude model: %s", cfg.ClaudeModel)
 	if err := r.Run(":" + cfg.Port); err != nil {
 		log.Fatalf("server error: %v", err)
 	}

@@ -3,10 +3,12 @@ package config
 import "os"
 
 type Config struct {
-	DatabaseURL     string
-	JWTSecret       string
+	DatabaseURL string
+	JWTSecret   string
+	Port        string
+	// Claude API
 	AnthropicAPIKey string
-	Port            string
+	ClaudeModel     string
 }
 
 func Load() *Config {
@@ -25,10 +27,16 @@ func Load() *Config {
 		jwtSecret = os.Getenv("JWT_SECRET")
 	}
 
+	claudeModel := os.Getenv("CLAUDE_MODEL")
+	if claudeModel == "" {
+		claudeModel = "claude-sonnet-4-6"
+	}
+
 	return &Config{
 		DatabaseURL:     dbURL,
 		JWTSecret:       jwtSecret,
 		AnthropicAPIKey: os.Getenv("ANTHROPIC_API_KEY"),
+		ClaudeModel:     claudeModel,
 		Port:            port,
 	}
 }

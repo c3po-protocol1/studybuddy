@@ -6,12 +6,23 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 )
 
-const claudeModel = "claude-sonnet-4-6"
 const anthropicBaseURL = "https://api.anthropic.com/v1/messages"
 const anthropicVersion = "2023-06-01"
+
+// apiKey and model are set once at startup via Configure().
+var (
+	apiKey string
+	model  string
+)
+
+// Configure sets the API key and model for all Claude calls.
+// Must be called before any agent functions are used.
+func Configure(anthropicAPIKey, claudeModel string) {
+	apiKey = anthropicAPIKey
+	model = claudeModel
+}
 
 type claudeMessage struct {
 	Role    string `json:"role"`
@@ -38,13 +49,15 @@ type claudeResponse struct {
 
 // CallClaude sends a prompt to the Anthropic Claude API and returns the response text.
 func CallClaude(prompt string, maxTokens int) (string, error) {
-	apiKey := os.Getenv("ANTHROPIC_API_KEY")
 	if apiKey == "" {
-		return "", fmt.Errorf("ANTHROPIC_API_KEY not set")
+		return "", fmt.Errorf("ANTHROPIC_API_KEY not configured")
+	}
+	if model == "" {
+		return "", fmt.Errorf("CLAUDE_MODEL not configured")
 	}
 
 	reqBody := claudeRequest{
-		Model:     claudeModel,
+		Model:     model,
 		MaxTokens: maxTokens,
 		Messages: []claudeMessage{
 			{Role: "user", Content: prompt},
