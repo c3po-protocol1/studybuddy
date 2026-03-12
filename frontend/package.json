@@ -9,7 +9,6 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.78.0",
     "@libsql/client": "^0.17.0",
     "@prisma/adapter-libsql": "^7.4.2",
     "@prisma/client": "^7.4.2",
