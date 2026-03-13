@@ -30,10 +30,10 @@ interface Space {
 }
 
 const STATUS_LABEL: Record<string, { label: string; className: string }> = {
-  pending: { label: "대기", className: "bg-gray-100 text-gray-500" },
-  processing: { label: "분석중", className: "bg-yellow-100 text-yellow-700 animate-pulse" },
-  done: { label: "완료", className: "bg-green-100 text-green-700" },
-  error: { label: "오류", className: "bg-red-100 text-red-600" },
+  pending: { label: "대기", className: "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400" },
+  processing: { label: "분석중", className: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-400 animate-pulse" },
+  done: { label: "완료", className: "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-400" },
+  error: { label: "오류", className: "bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-400" },
 };
 
 export default function SpacePage() {
@@ -47,6 +47,7 @@ export default function SpacePage() {
   const [loading, setLoading] = useState(true);
   const [showUploader, setShowUploader] = useState(false);
   const [pollingIds, setPollingIds] = useState<Set<string>>(new Set());
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const fetchSpace = useCallback(async () => {
     try {
@@ -116,35 +117,58 @@ export default function SpacePage() {
   if (!space) return null;
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 flex-shrink-0">
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
         <div className="flex items-center gap-3 px-5 py-3">
-          <Link href="/" className="text-gray-400 hover:text-gray-600 transition-colors text-sm">
+          {/* Mobile sidebar toggle */}
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="md:hidden p-1 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center"
+            aria-label="자료 목록"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <Link href="/" className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors text-sm">
             ← 홈
           </Link>
-          <span className="text-gray-300">/</span>
+          <span className="text-gray-300 dark:text-gray-600">/</span>
           <div
             className="w-8 h-8 rounded-xl flex items-center justify-center text-xl"
             style={{ backgroundColor: space.color + "25" }}
           >
             {space.emoji}
           </div>
-          <h1 className="font-semibold text-gray-900">{space.name}</h1>
-          <span className="ml-1 text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">
+          <h1 className="font-semibold text-gray-900 dark:text-gray-100 truncate">{space.name}</h1>
+          <span className="ml-1 text-xs text-gray-400 bg-gray-100 dark:bg-gray-700 dark:text-gray-400 px-2 py-1 rounded-full whitespace-nowrap">
             자료 {space.materials?.length ?? 0}개
           </span>
         </div>
       </header>
 
       {/* Body: sidebar + main */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Mobile overlay */}
+        {sidebarOpen && (
+          <div
+            className="md:hidden fixed inset-0 bg-black/30 z-20"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
         {/* Sidebar */}
-        <aside className="w-64 bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
-          <div className="p-4 border-b border-gray-100">
+        <aside className={`
+          w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col flex-shrink-0
+          md:relative md:translate-x-0
+          fixed inset-y-0 left-0 z-30 transform transition-transform duration-200
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+        `}>
+          <div className="p-4 border-b border-gray-100 dark:border-gray-700">
             <button
               onClick={() => setShowUploader((v) => !v)}
-              className="w-full py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors flex items-center justify-center gap-1.5"
+              className="w-full py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors flex items-center justify-center gap-1.5 min-h-[44px]"
             >
               <span className="text-base leading-none">+</span>
               자료 업로드
@@ -152,25 +176,28 @@ export default function SpacePage() {
           </div>
 
           {showUploader && (
-            <div className="p-3 border-b border-gray-100">
+            <div className="p-3 border-b border-gray-100 dark:border-gray-700">
               <FileUploader spaceId={spaceId} onUploadComplete={handleUploadComplete} />
             </div>
           )}
 
           <div className="flex-1 overflow-y-auto p-3 space-y-1">
             {(space.materials?.length ?? 0) === 0 ? (
-              <p className="text-center text-xs text-gray-400 py-6">자료가 없습니다.</p>
+              <p className="text-center text-xs text-gray-400 dark:text-gray-500 py-6">자료가 없습니다.</p>
             ) : (
               (space.materials ?? []).map((mat) => {
                 const statusInfo = STATUS_LABEL[mat.status] ?? STATUS_LABEL.pending;
                 return (
                   <button
                     key={mat.id}
-                    onClick={() => setSelectedMaterialId(mat.id)}
+                    onClick={() => {
+                      setSelectedMaterialId(mat.id);
+                      setSidebarOpen(false);
+                    }}
                     className={`w-full text-left p-3 rounded-xl transition-all group relative ${
                       selectedMaterialId === mat.id
-                        ? "bg-indigo-50 border border-indigo-200"
-                        : "hover:bg-gray-50 border border-transparent"
+                        ? "bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700"
+                        : "hover:bg-gray-50 dark:hover:bg-gray-700/50 border border-transparent"
                     }`}
                   >
                     <div className="flex items-start gap-2">
@@ -178,13 +205,13 @@ export default function SpacePage() {
                         {mat.filename.endsWith(".pdf") ? "📄" : "📝"}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-gray-800 truncate">{mat.filename}</p>
+                        <p className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">{mat.filename}</p>
                         <div className="flex items-center gap-1.5 mt-1">
                           <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${statusInfo.className}`}>
                             {statusInfo.label}
                           </span>
                           {mat._count && mat._count.questions > 0 && (
-                            <span className="text-[10px] text-gray-400">
+                            <span className="text-[10px] text-gray-400 dark:text-gray-500">
                               문제 {mat._count.questions}개
                             </span>
                           )}
@@ -208,8 +235,8 @@ export default function SpacePage() {
         {/* Main content */}
         <main className="flex-1 overflow-hidden flex flex-col">
           {/* Tabs */}
-          <div className="bg-white border-b border-gray-200 flex-shrink-0">
-            <div className="flex px-6">
+          <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+            <div className="flex px-4 sm:px-6 overflow-x-auto">
               {(
                 [
                   { key: "summary", label: "요약", icon: "📋" },
@@ -220,10 +247,10 @@ export default function SpacePage() {
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
-                  className={`flex items-center gap-1.5 px-4 py-3.5 text-sm font-medium border-b-2 transition-colors ${
+                  className={`flex items-center gap-1.5 px-4 py-3.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap min-h-[44px] ${
                     activeTab === tab.key
-                      ? "border-indigo-600 text-indigo-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700"
+                      ? "border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400"
+                      : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                   }`}
                 >
                   <span>{tab.icon}</span>

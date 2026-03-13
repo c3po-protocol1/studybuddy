@@ -1,9 +1,16 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #f8fafc;
   --foreground: #0f172a;
   --font-sans: var(--font-geist);
+}
+
+.dark {
+  --background: #0f172a;
+  --foreground: #e2e8f0;
 }
 
 body {
@@ -22,4 +29,8 @@ body {
 .prose strong { font-weight: 600; }
 .prose em { font-style: italic; }
 .prose code { background: #f1f5f9; padding: 0.1rem 0.3rem; border-radius: 4px; font-size: 0.875rem; }
+.dark .prose code { background: #1e293b; color: #e2e8f0; }
 .prose blockquote { border-left: 3px solid #6366f1; padding-left: 1rem; color: #475569; margin: 0.75rem 0; }
+.dark .prose blockquote { color: #94a3b8; }
+.dark .prose h1, .dark .prose h2, .dark .prose h3 { color: #e2e8f0; }
+.dark .prose p, .dark .prose li { color: #cbd5e1; }

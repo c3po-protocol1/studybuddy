@@ -1,6 +1,7 @@
 "use client";
 
-// Providers wrapper - NextAuth SessionProvider removed in favor of custom JWT auth
+import { ThemeProvider } from "./ThemeProvider";
+
 export default function Providers({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return <ThemeProvider>{children}</ThemeProvider>;
 }
