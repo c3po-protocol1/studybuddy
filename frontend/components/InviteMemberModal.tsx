@@ -34,7 +34,7 @@ export default function InviteMemberModal({ groupId, onClose, onInvited }: Props
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6" data-testid="invite-member-modal">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">멤버 초대</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-2xl leading-none">
@@ -50,12 +50,13 @@ export default function InviteMemberModal({ groupId, onClose, onInvited }: Props
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="friend@example.com"
+              data-testid="invite-email-input"
               className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               autoFocus
             />
           </div>
 
-          {error && <p className="text-red-500 text-sm">{error}</p>}
+          {error && <p className="text-red-500 text-sm" data-testid="invite-error">{error}</p>}
 
           <div className="flex gap-3">
             <button
@@ -69,6 +70,7 @@ export default function InviteMemberModal({ groupId, onClose, onInvited }: Props
               type="submit"
               disabled={loading}
               className="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 min-h-[44px]"
+              data-testid="invite-submit"
             >
               {loading ? "초대 중..." : "초대하기"}
             </button>

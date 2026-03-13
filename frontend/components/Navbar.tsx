@@ -24,7 +24,7 @@ export default function Navbar() {
         </Link>
 
         {/* Desktop nav */}
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden md:flex items-center gap-3" data-testid="desktop-nav">
           <Link
             href="/groups"
             className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1 transition-colors"
@@ -54,6 +54,7 @@ export default function Navbar() {
             onClick={() => setMenuOpen(!menuOpen)}
             className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center"
             aria-label="메뉴"
+            data-testid="mobile-menu-toggle"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               {menuOpen ? (
@@ -68,7 +69,7 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="md:hidden mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 space-y-2">
+        <div className="md:hidden mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 space-y-2" data-testid="mobile-menu">
           <p className="text-sm text-gray-600 dark:text-gray-400 px-2">{user.email}</p>
           <Link
             href="/groups"

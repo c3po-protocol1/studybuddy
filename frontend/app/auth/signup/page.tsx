@@ -44,7 +44,7 @@ export default function SignUpPage() {
         <h1 className="text-2xl font-bold text-gray-900 mb-2">회원가입</h1>
         <p className="text-gray-500 text-sm mb-6">무료로 시작하세요</p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" data-testid="signup-form">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">이름 (선택)</label>
             <input
@@ -53,6 +53,7 @@ export default function SignUpPage() {
               onChange={(e) => setName(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               placeholder="홍길동"
+              data-testid="signup-name"
             />
           </div>
 
@@ -65,6 +66,7 @@ export default function SignUpPage() {
               onChange={(e) => setEmail(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               placeholder="you@example.com"
+              data-testid="signup-email"
             />
           </div>
 
@@ -78,15 +80,17 @@ export default function SignUpPage() {
               onChange={(e) => setPassword(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               placeholder="8자 이상"
+              data-testid="signup-password"
             />
           </div>
 
-          {error && <p className="text-red-500 text-sm">{error}</p>}
+          {error && <p className="text-red-500 text-sm" data-testid="signup-error">{error}</p>}
 
           <button
             type="submit"
             disabled={loading}
             className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-medium rounded-lg py-2 text-sm transition-colors"
+            data-testid="signup-submit"
           >
             {loading ? "처리 중..." : "회원가입"}
           </button>
@@ -94,7 +98,7 @@ export default function SignUpPage() {
 
         <p className="text-center text-sm text-gray-500 mt-6">
           이미 계정이 있으신가요?{" "}
-          <Link href="/auth/signin" className="text-indigo-600 hover:underline font-medium">
+          <Link href="/auth/signin" className="text-indigo-600 hover:underline font-medium" data-testid="signup-signin-link">
             로그인
           </Link>
         </p>

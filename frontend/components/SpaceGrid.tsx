@@ -50,7 +50,7 @@ function SortableSpaceCard({ space }: { space: Space }) {
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners} data-testid={`space-card-${space.id}`}>
       <Link href={`/spaces/${space.id}`}>
         <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-500 hover:shadow-lg transition-all duration-200 cursor-pointer group">
           <div
@@ -59,7 +59,7 @@ function SortableSpaceCard({ space }: { space: Space }) {
           >
             {space.emoji}
           </div>
-          <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-lg mb-1 truncate">
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-lg mb-1 truncate" data-testid={`space-name-${space.id}`}>
             {space.name}
           </h3>
           <p className="text-sm text-gray-400 dark:text-gray-500">
@@ -105,7 +105,7 @@ export default function SpaceGrid({ spaces, onReorder, onCreateClick }: SpaceGri
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <SortableContext items={items.map((s) => s.id)} strategy={rectSortingStrategy}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5" data-testid="space-grid">
           {items.map((space) => (
             <SortableSpaceCard key={space.id} space={space} />
           ))}

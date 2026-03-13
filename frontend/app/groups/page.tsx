@@ -54,6 +54,7 @@ export default function GroupListPage() {
           <button
             onClick={() => setShowModal(true)}
             className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors flex items-center gap-2 min-h-[44px]"
+            data-testid="create-group-btn"
           >
             <span className="text-lg leading-none">+</span>
             새 그룹
@@ -85,9 +86,9 @@ export default function GroupListPage() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" data-testid="group-grid">
             {groups.map((group) => (
-              <Link key={group.id} href={`/groups/${group.id}`}>
+              <Link key={group.id} href={`/groups/${group.id}`} data-testid={`group-card-${group.id}`}>
                 <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-500 hover:shadow-lg transition-all duration-200 cursor-pointer group">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/50 rounded-2xl flex items-center justify-center text-2xl">

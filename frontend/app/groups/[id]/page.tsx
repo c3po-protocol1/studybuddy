@@ -114,7 +114,7 @@ export default function GroupDetailPage() {
 
       <main className="max-w-4xl mx-auto px-6 py-10 space-y-8">
         {/* Group info */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-8">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-8" data-testid="group-header">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/50 rounded-2xl flex items-center justify-center text-4xl">
               {group.emoji}
@@ -138,12 +138,13 @@ export default function GroupDetailPage() {
               <button
                 onClick={() => setShowInvite(true)}
                 className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors min-h-[44px]"
+                data-testid="invite-member-btn"
               >
                 멤버 초대
               </button>
             )}
           </div>
-          <div className="space-y-3">
+          <div className="space-y-3" data-testid="member-list">
             {group.members.map((member) => (
               <div key={member.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                 <MemberAvatar email={member.email} role={member.role} />

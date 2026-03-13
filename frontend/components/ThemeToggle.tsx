@@ -19,6 +19,8 @@ export default function ThemeToggle() {
     <button
       onClick={handleClick}
       aria-label="테마 변경"
+      data-testid="theme-toggle-btn"
+      data-theme={theme}
       className="text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-300 min-w-[44px] min-h-[44px] flex items-center justify-center"
       title={`현재: ${theme === "dark" ? "다크" : theme === "light" ? "라이트" : "시스템"}`}
     >
