@@ -33,7 +33,7 @@ type Space struct {
 	SortOrder int            `json:"sortOrder" gorm:"column:sortOrder;not null;default:0"`
 	CreatedAt time.Time      `json:"createdAt" gorm:"column:createdAt;autoCreateTime"`
 	Count     *MaterialCount `json:"_count,omitempty" gorm:"-"`
-	Materials []Material     `json:"materials,omitempty" gorm:"-"`
+	Materials []Material     `json:"materials" gorm:"-"`
 }
 
 func (Space) TableName() string { return "Space" }
@@ -69,7 +69,7 @@ type Material struct {
 	Summary   *Summary       `json:"summary,omitempty" gorm:"-"`
 	KeyPoints *KeyPoints     `json:"keyPoints,omitempty" gorm:"-"`
 	Count     *QuestionCount `json:"_count,omitempty" gorm:"-"`
-	Questions []Question     `json:"questions,omitempty" gorm:"-"`
+	Questions []Question     `json:"questions" gorm:"-"`
 }
 
 func (Material) TableName() string { return "Material" }
@@ -119,8 +119,8 @@ type StudyGroup struct {
 	Description string        `json:"description" gorm:"column:description;not null;default:''"`
 	OwnerID     string        `json:"ownerId" gorm:"column:ownerId;not null"`
 	CreatedAt   time.Time     `json:"createdAt" gorm:"column:createdAt;autoCreateTime"`
-	Members     []GroupMember `json:"members,omitempty" gorm:"-"`
-	Spaces      []Space       `json:"spaces,omitempty" gorm:"-"`
+	Members     []GroupMember `json:"members" gorm:"-"`
+	Spaces      []Space       `json:"spaces" gorm:"-"`
 	MemberCount int           `json:"memberCount,omitempty" gorm:"-"`
 }
 

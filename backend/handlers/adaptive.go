@@ -138,8 +138,8 @@ func (h *AdaptiveHandler) PostAdaptive(c *gin.Context) {
 		}
 
 		result := h.DB.Exec(
-			`INSERT INTO "Question" ("id", "materialId", "type", "question", "options", "answer", "explanation", "topic")
-			 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+			`INSERT INTO "Question" ("id", "materialId", "type", "question", "options", "answer", "explanation", "topic", "createdAt")
+			 VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
 			qID, body.MaterialID, q.Type, q.Question, optionsJSON, q.Answer, q.Explanation, q.Topic,
 		)
 		if result.Error != nil {

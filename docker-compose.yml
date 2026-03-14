@@ -55,6 +55,8 @@ services:
       JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
       RAG_SERVICE_URL: http://rag-service:8000
       PORT: "8080"
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      CLAUDE_MODEL: ${CLAUDE_MODEL:-claude-sonnet-4-20250514}
     ports:
       - "8080:8080"
 

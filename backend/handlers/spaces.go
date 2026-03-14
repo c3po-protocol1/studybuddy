@@ -40,6 +40,7 @@ func (h *SpaceHandler) GetSpaces(c *gin.Context) {
 			return
 		}
 		sp.Count = &models.MaterialCount{Materials: matCount}
+		sp.Materials = []models.Material{}
 		spaces = append(spaces, sp)
 	}
 
@@ -66,7 +67,7 @@ func (h *SpaceHandler) CreateSpace(c *gin.Context) {
 
 	id := uuid.New().String()
 	result := h.DB.Exec(
-		`INSERT INTO "Space" ("id", "name", "emoji", "color") VALUES (?, ?, ?, ?)`,
+		`INSERT INTO "Space" ("id", "name", "emoji", "color", "createdAt") VALUES (?, ?, ?, ?, NOW())`,
 		id, body.Name, body.Emoji, body.Color,
 	)
 	if result.Error != nil {

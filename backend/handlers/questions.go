@@ -50,7 +50,7 @@ func (h *QuestionHandler) AnswerQuestion(c *gin.Context) {
 	historyID := uuid.New().String()
 
 	result := h.DB.Exec(
-		`INSERT INTO "AnswerHistory" ("id", "questionId", "isCorrect", "userAnswer") VALUES (?, ?, ?, ?)`,
+		`INSERT INTO "AnswerHistory" ("id", "questionId", "isCorrect", "userAnswer", "answeredAt") VALUES (?, ?, ?, ?, NOW())`,
 		historyID, questionID, isCorrect, body.UserAnswer,
 	)
 	if result.Error != nil {

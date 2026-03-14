@@ -132,7 +132,7 @@ export default function GroupDetailPage() {
         <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-8">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              멤버 ({group.members.filter((m) => m.role !== "pending").length})
+              멤버 ({(group.members ?? []).filter((m) => m.role !== "pending").length})
             </h3>
             {isOwner && (
               <button
@@ -145,7 +145,7 @@ export default function GroupDetailPage() {
             )}
           </div>
           <div className="space-y-3" data-testid="member-list">
-            {group.members.map((member) => (
+            {(group.members ?? []).map((member) => (
               <div key={member.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                 <MemberAvatar email={member.email} role={member.role} />
                 <div className="flex-1 min-w-0">
@@ -171,13 +171,13 @@ export default function GroupDetailPage() {
         {/* Shared spaces */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-8">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6">
-            공유된 공간 ({group.spaces.length})
+            공유된 공간 ({(group.spaces ?? []).length})
           </h3>
-          {group.spaces.length === 0 ? (
+          {(group.spaces ?? []).length === 0 ? (
             <p className="text-center text-gray-400 dark:text-gray-500 py-8">아직 공유된 공간이 없습니다.</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {group.spaces.map((space) => (
+              {(group.spaces ?? []).map((space) => (
                 <Link key={space.id} href={`/spaces/${space.id}`}>
                   <div className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 dark:border-gray-600 hover:border-indigo-300 dark:hover:border-indigo-500 transition-colors">
                     <div
