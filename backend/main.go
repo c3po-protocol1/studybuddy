@@ -46,6 +46,7 @@ func main() {
 	adaptiveHandler := &handlers.AdaptiveHandler{DB: db}
 	ragHandler := &handlers.RagHandler{}
 	settingsHandler := &handlers.SettingsHandler{DB: db}
+	groupHandler := &handlers.GroupHandler{DB: db}
 
 	r := gin.Default()
 
@@ -73,6 +74,7 @@ func main() {
 			// Spaces
 			protected.GET("/spaces", spaceHandler.GetSpaces)
 			protected.POST("/spaces", spaceHandler.CreateSpace)
+			protected.PUT("/spaces/reorder", spaceHandler.ReorderSpaces)
 			protected.GET("/spaces/:id", spaceHandler.GetSpace)
 			protected.DELETE("/spaces/:id", spaceHandler.DeleteSpace)
 
@@ -94,6 +96,15 @@ func main() {
 
 			// RAG document ingest
 			protected.POST("/rag/ingest", ragHandler.IngestRAG)
+
+			// Study groups
+			protected.POST("/groups", groupHandler.CreateGroup)
+			protected.GET("/groups", groupHandler.ListGroups)
+			protected.GET("/groups/:id", groupHandler.GetGroup)
+			protected.POST("/groups/:id/invite", groupHandler.InviteMember)
+			protected.POST("/groups/:id/join", groupHandler.JoinGroup)
+			protected.POST("/groups/:id/spaces", groupHandler.LinkSpace)
+			protected.DELETE("/groups/:id/members/:userId", groupHandler.RemoveMember)
 
 			// User settings
 			protected.GET("/settings", settingsHandler.GetSettings)

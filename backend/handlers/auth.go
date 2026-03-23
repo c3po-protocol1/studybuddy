@@ -67,7 +67,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 
 	id := uuid.New().String()
 	result := h.DB.Exec(
-		`INSERT INTO "User" ("id", "email", "password", "name") VALUES (?, ?, ?, ?)`,
+		`INSERT INTO "User" ("id", "email", "password", "name", "createdAt") VALUES (?, ?, ?, ?, NOW())`,
 		id, req.Email, string(hashed), req.Name,
 	)
 	if result.Error != nil {

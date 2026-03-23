@@ -40,6 +40,7 @@ func (h *SpaceHandler) GetSpaces(c *gin.Context) {
 			return
 		}
 		sp.Count = &models.MaterialCount{Materials: matCount}
+		sp.Materials = []models.Material{}
 		spaces = append(spaces, sp)
 	}
 
@@ -66,7 +67,7 @@ func (h *SpaceHandler) CreateSpace(c *gin.Context) {
 
 	id := uuid.New().String()
 	result := h.DB.Exec(
-		`INSERT INTO "Space" ("id", "name", "emoji", "color") VALUES (?, ?, ?, ?)`,
+		`INSERT INTO "Space" ("id", "name", "emoji", "color", "createdAt") VALUES (?, ?, ?, ?, NOW())`,
 		id, body.Name, body.Emoji, body.Color,
 	)
 	if result.Error != nil {
@@ -147,6 +148,26 @@ func (h *SpaceHandler) GetSpace(c *gin.Context) {
 
 	sp.Materials = materials
 	c.JSON(http.StatusOK, sp)
+}
+
+func (h *SpaceHandler) ReorderSpaces(c *gin.Context) {
+	var body struct {
+		OrderedIDs []string `json:"orderedIds" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if len(body.OrderedIDs) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "orderedIds must not be empty"})
+		return
+	}
+
+	for i, id := range body.OrderedIDs {
+		h.DB.Model(&models.Space{}).Where("id = ?", id).Update("sortOrder", i)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 
 func (h *SpaceHandler) DeleteSpace(c *gin.Context) {

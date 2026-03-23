@@ -37,7 +37,7 @@ export default function SignInPage() {
         <h1 className="text-2xl font-bold text-gray-900 mb-2">로그인</h1>
         <p className="text-gray-500 text-sm mb-6">StudyBuddy에 오신 것을 환영합니다</p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" data-testid="signin-form">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">이메일</label>
             <input
@@ -47,6 +47,7 @@ export default function SignInPage() {
               onChange={(e) => setEmail(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               placeholder="you@example.com"
+              data-testid="signin-email"
             />
           </div>
 
@@ -59,15 +60,17 @@ export default function SignInPage() {
               onChange={(e) => setPassword(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               placeholder="••••••••"
+              data-testid="signin-password"
             />
           </div>
 
-          {error && <p className="text-red-500 text-sm">{error}</p>}
+          {error && <p className="text-red-500 text-sm" data-testid="signin-error">{error}</p>}
 
           <button
             type="submit"
             disabled={loading}
             className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-medium rounded-lg py-2 text-sm transition-colors"
+            data-testid="signin-submit"
           >
             {loading ? "로그인 중..." : "로그인"}
           </button>
@@ -75,7 +78,7 @@ export default function SignInPage() {
 
         <p className="text-center text-sm text-gray-500 mt-6">
           계정이 없으신가요?{" "}
-          <Link href="/auth/signup" className="text-indigo-600 hover:underline font-medium">
+          <Link href="/auth/signup" className="text-indigo-600 hover:underline font-medium" data-testid="signin-signup-link">
             회원가입
           </Link>
         </p>

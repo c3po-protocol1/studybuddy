@@ -86,7 +86,7 @@ func (h *MaterialHandler) UploadMaterial(c *gin.Context) {
 
 	id := uuid.New().String()
 	result := h.DB.Exec(
-		`INSERT INTO "Material" ("id", "spaceId", "filename", "content", "status") VALUES (?, ?, ?, ?, 'pending')`,
+		`INSERT INTO "Material" ("id", "spaceId", "filename", "content", "status", "createdAt") VALUES (?, ?, ?, ?, 'pending', NOW())`,
 		id, spaceID, filename, content,
 	)
 	if result.Error != nil {
@@ -293,8 +293,8 @@ func (h *MaterialHandler) ProcessMaterial(c *gin.Context) {
 	// Upsert summary (PostgreSQL ON CONFLICT)
 	summaryID := uuid.New().String()
 	result = h.DB.Exec(
-		`INSERT INTO "Summary" ("id", "materialId", "content")
-		 VALUES (COALESCE((SELECT "id" FROM "Summary" WHERE "materialId" = ?), ?), ?, ?)
+		`INSERT INTO "Summary" ("id", "materialId", "content", "createdAt")
+		 VALUES (COALESCE((SELECT "id" FROM "Summary" WHERE "materialId" = ?), ?), ?, ?, NOW())
 		 ON CONFLICT ("materialId") DO UPDATE SET "content" = EXCLUDED."content"`,
 		materialID, summaryID, materialID, summaryContent,
 	)
@@ -307,8 +307,8 @@ func (h *MaterialHandler) ProcessMaterial(c *gin.Context) {
 	// Upsert key points (PostgreSQL ON CONFLICT)
 	kpID := uuid.New().String()
 	result = h.DB.Exec(
-		`INSERT INTO "KeyPoints" ("id", "materialId", "points")
-		 VALUES (COALESCE((SELECT "id" FROM "KeyPoints" WHERE "materialId" = ?), ?), ?, ?)
+		`INSERT INTO "KeyPoints" ("id", "materialId", "points", "createdAt")
+		 VALUES (COALESCE((SELECT "id" FROM "KeyPoints" WHERE "materialId" = ?), ?), ?, ?, NOW())
 		 ON CONFLICT ("materialId") DO UPDATE SET "points" = EXCLUDED."points"`,
 		materialID, kpID, materialID, kpJSON,
 	)
@@ -331,8 +331,8 @@ func (h *MaterialHandler) ProcessMaterial(c *gin.Context) {
 		}
 
 		h.DB.Exec(
-			`INSERT INTO "Question" ("id", "materialId", "type", "question", "options", "answer", "explanation", "topic")
-			 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+			`INSERT INTO "Question" ("id", "materialId", "type", "question", "options", "answer", "explanation", "topic", "createdAt")
+			 VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
 			qID, materialID, q.Type, q.Question, optionsJSON, q.Answer, q.Explanation, q.Topic,
 		)
 	}
